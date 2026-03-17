@@ -24,6 +24,6 @@ npm publish --access public
 Settings -> Pages -> Source -> GitHub Actions
 
 ## 5. Verify
-- npm: https://www.npmjs.com/package/markupkit
+- npm: https://www.npmjs.com/package/@dragoon0x/markupkit
 - Essay: https://dragoon0x.github.io/markupkit/
 - GitHub: https://github.com/dragoon0x/markupkit

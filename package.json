@@ -1,5 +1,5 @@
 {
-  "name": "markupkit",
+  "name": "@dragoon0x/markupkit",
   "version": "1.0.0",
   "description": "Draw on your live website. Freehand feedback for AI agents. Circles detect elements, arrows map relationships, strikethroughs flag removals.",
   "main": "dist/index.js",

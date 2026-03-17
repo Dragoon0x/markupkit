@@ -1,4 +1,4 @@
-# markupkit
+# @dragoon0x/markupkit
 
 Draw on your live website. Freehand feedback for AI agents. Circles detect elements, arrows map relationships, strikethroughs flag removals.
 
@@ -11,13 +11,13 @@ Agentation proved pointing beats describing. MarkupKit pushes that further: **dr
 ## Install
 
 ```bash
-npm i markupkit
+npm i @dragoon0x/markupkit
 ```
 
 ## Quick Start
 
 ```tsx
-import { Markup } from 'markupkit'
+import { Markup } from '@dragoon0x/markupkit'
 
 export default function Layout({ children }) {
   return (
@@ -90,7 +90,7 @@ Each shape auto-resolves to DOM elements with CSS selectors.
 ## Programmatic API
 
 ```ts
-import { detectShape, resolveShape, formatSession } from 'markupkit'
+import { detectShape, resolveShape, formatSession } from '@dragoon0x/markupkit'
 
 // Detect shape from a stroke
 const shape = detectShape(stroke)
