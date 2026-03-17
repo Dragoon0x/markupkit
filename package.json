@@ -1,0 +1,61 @@
+{
+  "name": "markupkit",
+  "version": "1.0.0",
+  "description": "Draw on your live website. Freehand feedback for AI agents. Circles detect elements, arrows map relationships, strikethroughs flag removals.",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "react",
+    "draw",
+    "annotate",
+    "feedback",
+    "agent",
+    "ai",
+    "markup",
+    "freehand",
+    "circle",
+    "arrow",
+    "sketch",
+    "devtools",
+    "cursor",
+    "claude"
+  ],
+  "author": "dragoon0x",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dragoon0x/markupkit"
+  },
+  "homepage": "https://dragoon0x.github.io/markupkit",
+  "peerDependencies": {
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3"
+  }
+}

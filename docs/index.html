@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MarkupKit — Draw on your live website</title>
+<meta name="description" content="MarkupKit turns freehand drawings into structured context AI coding agents can act on. Draw circles, arrows, and strikethroughs on your live website.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#ffffff;--bg2:#fafafa;--bg3:#f5f5f5;
+  --border:#e8e8e8;--border2:#d4d4d4;
+  --text:#171717;--text2:#525252;--text3:#737373;--text4:#a3a3a3;
+  --accent:#171717;
+  --green:#16a34a;--amber:#ca8a04;--red:#dc2626;
+  --font:'Inter',system-ui,-apple-system,sans-serif;
+  --mono:ui-monospace,'SF Mono','Fira Code','Cascadia Code',monospace;
+}
+html{scroll-behavior:smooth;font-size:15px}
+body{background:var(--bg);color:var(--text);font-family:var(--font);line-height:1.7;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+::selection{background:#e5e5e5}
+a{color:var(--text);text-decoration:underline;text-decoration-color:var(--border2);text-underline-offset:2px}
+a:hover{text-decoration-color:var(--text)}
+*:focus-visible{outline:2px solid var(--text);outline-offset:2px;border-radius:2px}
+
+/* ===== LAYOUT ===== */
+.layout{display:grid;grid-template-columns:220px 1fr;min-height:100vh}
+@media(max-width:860px){.layout{grid-template-columns:1fr}}
+
+/* ===== SIDEBAR ===== */
+.sidebar{border-right:1px solid var(--border);padding:24px 20px;position:sticky;top:0;height:100vh;overflow-y:auto;font-size:13px}
+@media(max-width:860px){.sidebar{display:none}}
+.sidebar .logo{font-weight:600;font-size:14px;color:var(--text);margin-bottom:24px;display:block;text-decoration:none}
+.sidebar .logo span{color:var(--text4);font-weight:400;font-size:12px;margin-left:4px}
+.sidebar nav a{display:block;padding:4px 0;color:var(--text3);text-decoration:none;transition:color .1s}
+.sidebar nav a:hover{color:var(--text)}
+.sidebar nav a.active{color:var(--text);font-weight:500}
+.sidebar .sep{font-size:11px;font-weight:500;color:var(--text4);text-transform:uppercase;letter-spacing:.5px;margin-top:20px;margin-bottom:6px;padding-top:16px;border-top:1px solid var(--border)}
+.sidebar .sep:first-of-type{border-top:none;margin-top:16px}
+
+/* ===== MAIN ===== */
+.main{padding:32px 40px 100px;max-width:720px}
+@media(max-width:860px){.main{padding:24px 20px 80px}}
+
+.main h1{font-size:28px;font-weight:600;letter-spacing:-.02em;line-height:1.3;margin-bottom:16px}
+.main h2{font-size:18px;font-weight:600;margin-top:48px;margin-bottom:12px;scroll-margin-top:24px}
+.main p{margin-bottom:16px;color:var(--text2)}
+.main strong{color:var(--text);font-weight:600}
+.main ul,.main ol{margin-bottom:16px;padding-left:24px;color:var(--text2)}
+.main li{margin-bottom:4px}
+.main hr{border:none;height:1px;background:var(--border);margin:40px 0}
+
+code{font-family:var(--mono);font-size:.9em;background:var(--bg3);padding:1.5px 5px;border-radius:3px;color:var(--text)}
+kbd{display:inline-block;padding:1px 6px;background:var(--bg3);border:1px solid var(--border);border-radius:3px;font-family:var(--mono);font-size:.8em;font-weight:500;line-height:1.7}
+
+/* ===== INSTALL CODE ===== */
+.install{display:inline-block;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:8px 16px;font-family:var(--mono);font-size:13px;color:var(--text);cursor:pointer;transition:border-color .15s;margin-bottom:24px}
+.install:hover{border-color:var(--text)}
+
+/* ===== DEMO FRAMES ===== */
+.demo{border:1px solid var(--border);border-radius:10px;overflow:hidden;margin:20px 0 24px;background:var(--bg)}
+.demo-bar{padding:8px 12px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:11px;color:var(--text4);display:flex;justify-content:space-between;align-items:center;background:var(--bg2)}
+.demo-bar .live{color:var(--text);font-weight:500}
+.demo-body{position:relative;min-height:200px;overflow:hidden}
+.demo-body canvas{position:absolute;inset:0;width:100%;height:100%;z-index:10;touch-action:none}
+.demo-body .mock{position:relative;z-index:1;padding:20px}
+.demo-foot{padding:8px 12px;border-top:1px solid var(--border);font-family:var(--mono);font-size:11px;color:var(--text3);min-height:32px;background:var(--bg2);transition:all .15s}
+.demo-foot.has{background:#fafff7;color:var(--text)}
+.demo-foot .dt{font-weight:600;color:var(--text)}
+
+/* NOTE POP */
+.npop{position:absolute;z-index:20;background:var(--text);border-radius:8px;padding:6px;display:flex;gap:4px;align-items:center;box-shadow:0 4px 16px rgba(0,0,0,.15);opacity:0;pointer-events:none;transform:translateY(4px);transition:opacity .12s,transform .12s}
+.npop.show{opacity:1;pointer-events:auto;transform:translateY(0)}
+.npop input{background:#333;border:1px solid #555;color:#fff;padding:5px 8px;border-radius:4px;font-size:12px;outline:none;width:150px;font-family:var(--font)}.npop input::placeholder{color:#888}.npop input:focus{border-color:#999}
+.npb{border:none;border-radius:4px;padding:5px 10px;font-size:11px;cursor:pointer;font-weight:600;font-family:var(--font)}
+
+/* TABS */
+.tabs{display:flex;border-bottom:1px solid var(--border);background:var(--bg2)}
+.tab{padding:8px 14px;font-size:12px;font-weight:500;color:var(--text3);cursor:pointer;border:none;background:none;font-family:var(--font);border-bottom:2px solid transparent}
+.tab:hover{color:var(--text2)}.tab.on{color:var(--text);border-bottom-color:var(--text)}
+
+/* MOCK UI */
+.mc{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:8px}
+.mc h3{font-size:14px;font-weight:600;margin-bottom:2px}.mc p{font-size:12px;color:var(--text3);margin:0;line-height:1.5}
+.mbtn{display:inline-block;padding:6px 14px;border-radius:6px;font-size:12px;font-weight:500;font-family:var(--font);margin-right:4px;margin-top:4px}
+.mbtn.pr{background:var(--text);color:var(--bg)}.mbtn.sc{background:var(--bg);border:1px solid var(--border);color:var(--text2)}
+.mnav{display:flex;gap:12px;padding:6px 0;border-bottom:1px solid var(--border);margin-bottom:10px;font-size:12px;font-weight:500}
+.mnav a{color:var(--text4);text-decoration:none;cursor:default;padding-bottom:6px}.mnav a.on{color:var(--text);border-bottom:2px solid var(--text)}
+.minp{width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:var(--font);margin-bottom:6px;background:var(--bg)}
+.quote{border-left:2px solid var(--border);padding:10px 14px;margin:8px 0;font-style:italic;font-size:13px;color:var(--text3);background:var(--bg2);border-radius:0 6px 6px 0}
+.avatar{width:36px;height:36px;border-radius:50%;background:var(--border2);display:inline-block;vertical-align:middle;margin-right:8px}
+.htip{position:absolute;z-index:15;background:var(--text);color:var(--bg);padding:4px 8px;border-radius:4px;font-family:var(--mono);font-size:10px;pointer-events:none;opacity:0;transition:opacity .1s;white-space:nowrap}.htip.show{opacity:1}
+
+/* CONTRAST */
+.cc{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:16px 0}
+.cc-sw{width:40px;height:40px;border-radius:6px;border:1px solid var(--border);cursor:pointer;position:relative;overflow:hidden}
+.cc-sw input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+
+/* TREE */
+.tree{font-family:var(--mono);font-size:11px;display:flex;gap:4px;align-items:center;flex-wrap:wrap;margin:4px 0 12px}
+.tree span{padding:2px 6px;border-radius:3px;background:var(--bg3);color:var(--text2)}.tree span:last-child{background:var(--text);color:var(--bg)}
+.tree .ar{background:none;color:var(--text4);padding:0}
+
+/* OUTPUT */
+.out-wrap{border:1px solid var(--border);border-radius:10px;overflow:hidden;margin:16px 0 24px}
+.out-tabs{display:flex;background:var(--bg2);border-bottom:1px solid var(--border)}
+.out-tab{flex:1;padding:10px 8px;font-size:11px;font-weight:500;color:var(--text3);cursor:pointer;border:none;background:none;font-family:var(--font);border-bottom:2px solid transparent;text-align:center}
+.out-tab:hover{color:var(--text2);background:var(--bg3)}.out-tab.on{color:var(--text);border-bottom-color:var(--text);background:var(--bg)}
+.out-tab small{display:block;font-size:10px;color:var(--text4);font-weight:400;margin-top:1px}
+.out-tab.on small{color:var(--text3)}
+.out-block{background:#1a1a1a;position:relative}
+.out-copy{position:absolute;top:8px;right:12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#888;padding:3px 10px;border-radius:4px;font-size:10px;font-family:var(--mono);cursor:pointer;z-index:2}.out-copy:hover{background:rgba(255,255,255,.12);color:#ccc}
+.out-body{padding:14px;font-family:var(--mono);font-size:11.5px;line-height:1.8;color:#999;white-space:pre-wrap;min-height:160px;max-height:460px;overflow-y:auto}
+.ow{color:#e5e5e5;font-weight:600}.og{color:#86efac}.or{color:#fca5a5}.oa{color:#fde68a}.os{color:#c4b5fd}
+.out-hint{padding:8px 12px;border-top:1px solid var(--border);font-size:12px;color:var(--text3);background:var(--bg2)}
+
+/* CHAT */
+.chat{border:1px solid var(--border);border-radius:10px;overflow:hidden;margin:16px 0 24px}
+.ch{padding:10px 14px;display:flex;gap:10px;border-bottom:1px solid var(--border)}.ch:last-child{border-bottom:none}
+.ch:nth-child(even){background:var(--bg2)}
+.ch-av{width:24px;height:24px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600}
+.ch-av.u{background:var(--bg3);color:var(--text3);border:1px solid var(--border)}.ch-av.a{background:var(--text);color:var(--bg)}
+.ch-b{font-size:12px;color:var(--text2);line-height:1.5}.ch-b strong{color:var(--text)}
+.ch-s{font-size:10px;font-family:var(--mono);padding:2px 6px;border-radius:3px;display:inline-block;margin-top:3px}
+
+/* SETTINGS */
+.set{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px;max-width:320px;margin:12px 0 24px}
+.sr{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px}.sr:last-child{border-bottom:none}
+.sl{color:var(--text2);font-weight:500}
+.tog{width:32px;height:18px;border-radius:9px;background:var(--border2);position:relative;cursor:pointer;transition:background .15s;flex-shrink:0}
+.tog.on{background:var(--text)}.tog::after{content:'';position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:var(--bg);transition:left .15s}.tog.on::after{left:16px}
+
+/* KB TABLE */
+.kb{width:100%;border-collapse:collapse;margin:8px 0 24px;font-size:13px}
+.kb td{padding:6px 0;border-bottom:1px solid var(--border);color:var(--text2)}.kb td:first-child{font-family:var(--mono);font-size:11px;color:var(--text);font-weight:500;width:200px}
+
+/* CODE */
+.cbl{background:#1a1a1a;border-radius:8px;overflow:hidden;margin:12px 0 24px}
+.cbl-h{padding:8px 12px;border-bottom:1px solid #333;font-family:var(--mono);font-size:11px;color:#666;display:flex;align-items:center;gap:8px}
+.cbl-h .d{display:flex;gap:4px}.cbl-h .d i{width:8px;height:8px;border-radius:50%;display:block}.cbl-h .d i:nth-child(1){background:#f87171}.cbl-h .d i:nth-child(2){background:#facc15}.cbl-h .d i:nth-child(3){background:#4ade80}
+.cbl pre{padding:12px;font-family:var(--mono);font-size:12.5px;line-height:1.7;overflow-x:auto;color:#d4d4d4}
+.ckw{color:#c4b5fd}.cstr{color:#86efac}.cfn{color:#93c5fd}.ctag{color:#fca5a5}.cattr{color:#fde68a}
+
+footer{padding:32px 40px;border-top:1px solid var(--border);font-size:12px;color:var(--text4)}footer a{color:var(--text3)}
+@media(max-width:860px){footer{padding:24px 20px}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+<!-- ===== SIDEBAR ===== -->
+<aside class="sidebar">
+  <a href="#" class="logo">markupkit<span>v1.0</span></a>
+  <nav>
+    <a href="#" class="active">Overview</a>
+    <a href="#modes">Modes</a>
+    <a href="#smart-id">Smart ID</a>
+    <a href="#styles">Computed Styles</a>
+    <a href="#spacing">Spacing Viz</a>
+    <a href="#contrast">Contrast</a>
+    <a href="#react">React Detection</a>
+    <a href="#output">Output</a>
+    <div class="sep">Usage</div>
+    <a href="#install">Install</a>
+    <a href="#shortcuts">Shortcuts</a>
+    <a href="#sync">Agent Sync</a>
+    <a href="#settings">Settings</a>
+    <div class="sep">Developers</div>
+    <a href="#api">API</a>
+    <a href="#props">Props</a>
+    <a href="#types">Types</a>
+    <a href="#http">HTTP API</a>
+    <a href="#events">Events</a>
+    <div class="sep">Resources</div>
+    <a href="https://github.com/dragoon0x/markupkit">GitHub</a>
+    <a href="https://www.npmjs.com/package/markupkit">npm</a>
+  </nav>
+</aside>
+
+<!-- ===== MAIN ===== -->
+<main class="main">
+
+<h1>Draw on bugs. Let AI fix them.</h1>
+
+<div class="install" onclick="navigator.clipboard.writeText('npm i markupkit').then(()=>{this.textContent='Copied!';setTimeout(()=>this.textContent='npm i markupkit',1500)})"><code style="background:none;padding:0">npm i markupkit</code></div>
+
+<p>MarkupKit turns freehand drawings into structured context that AI coding agents can understand and act on. Circle elements, draw arrows between them, strike through text, add a note, and copy the output into Claude Code, Cursor, or any AI tool.</p>
+
+<!-- ===== MODES ===== -->
+<h2 id="modes">Annotation modes</h2>
+
+<p>Six ways to annotate. Click the tabs to try each mode:</p>
+
+<div class="demo">
+  <div class="tabs">
+    <button class="tab on" onclick="setMode(this,'draw')">Draw</button>
+    <button class="tab" onclick="setMode(this,'text')">Text</button>
+    <button class="tab" onclick="setMode(this,'click')">Click</button>
+    <button class="tab" onclick="setMode(this,'multi')">Multi</button>
+    <button class="tab" onclick="setMode(this,'area')">Area</button>
+    <button class="tab" onclick="setMode(this,'pause')">Pause</button>
+  </div>
+  <div class="demo-body" id="mBody" style="min-height:300px;cursor:crosshair;user-select:none">
+    <canvas id="mCv" style="touch-action:none"></canvas>
+    <div class="mock">
+      <div class="mnav"><a class="on">Dashboard</a><a>Analytics</a><a>Settings</a></div>
+      <div class="mc"><h3>Monthly Revenue</h3><p>$124,500 — up 12% from last month</p></div>
+      <div class="mc"><h3>Active Users</h3><p>8,241 daily active users</p></div>
+      <div class="quote">"You have to work hard to get your thinking clean to make it <span style="color:var(--red)">simpl</span>."</div>
+      <div style="margin-top:8px"><span class="mbtn pr">Export Report</span><span class="mbtn sc">View Details</span></div>
+    </div>
+    <div class="npop" id="mNote"><input id="mNI" placeholder="Add a note..."><button class="npb" style="background:#fff;color:#171717" onclick="subN()">Add</button><button class="npb" style="background:transparent;color:#888;border:1px solid #555" onclick="skN()">Skip</button></div>
+  </div>
+  <div class="demo-foot" id="mFt">Draw circles, arrows, or lines on the mock UI</div>
+</div>
+
+<ul>
+  <li><strong>Draw</strong> — 7 gesture types with shape detection: circles, arrows, strikethroughs, underlines, crosses, rectangles, freehand</li>
+  <li><strong>Text</strong> — select text to annotate typos, copy changes, or tone issues</li>
+  <li><strong>Click</strong> — single element annotation, identified by content not just class</li>
+  <li><strong>Multi</strong> — click multiple elements, grouped in one annotation</li>
+  <li><strong>Area</strong> — drag a rectangle to select a region</li>
+  <li><strong>Pause</strong> — freeze all CSS animations and JS timers</li>
+</ul>
+
+<hr>
+
+<!-- ===== SMART ID ===== -->
+<h2 id="smart-id">Smart identification</h2>
+
+<p>MarkupKit names elements the way you'd search for them in code. Buttons by text, images by alt, inputs by label. Hover below:</p>
+
+<div class="demo">
+  <div class="demo-bar"><span>localhost:3000/@dragoon0x</span><span class="live">Hover</span></div>
+  <div class="demo-body" style="min-height:160px;cursor:default" id="sBody">
+    <div class="mock">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+        <div class="avatar" data-sm='img[alt="avatar"]'></div>
+        <div><div style="font-weight:600" data-sm='"Dragoon"'>Dragoon</div><div style="font-size:12px;color:var(--text3)" data-sm='"@dragoon0x"'>@dragoon0x</div></div>
+        <span class="mbtn pr" style="margin-left:auto;margin-top:0;font-size:11px" data-sm='"Follow" button'>Follow</span>
+      </div>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:8px" data-sm='p.bio'>Building tools for the agentic web.</p>
+      <div style="display:flex;gap:14px;font-size:12px"><span data-sm='"394 Following"'><strong>394</strong> Following</span><span data-sm='"28.3K Followers"'><strong>28.3K</strong> Followers</span></div>
+    </div>
+    <div class="htip" id="sTip"></div>
+  </div>
+  <div class="demo-foot" id="sFt">Hover any element to see its smart identifier</div>
+</div>
+
+<hr>
+
+<!-- ===== COMPUTED STYLES ===== -->
+<h2 id="styles">Computed styles</h2>
+
+<p>Click any element to capture its computed CSS. Click below:</p>
+
+<div class="demo">
+  <div class="demo-bar"><span>localhost:3000/settings</span><span class="live">Click</span></div>
+  <div class="demo-body" style="min-height:160px;cursor:pointer" id="csBody">
+    <div class="mock">
+      <div class="mc" data-css="padding: 12px 14px; border-radius: 8px; background: #fafafa; border: 1px solid #e8e8e8; font-size: 14px"><h3>Profile Settings</h3>
+        <input class="minp" value="dragoon@example.com" readonly data-css="padding: 7px 10px; border-radius: 6px; font-size: 12px; border: 1px solid #e8e8e8">
+        <span class="mbtn pr" style="margin-top:4px" data-css="padding: 6px 14px; border-radius: 6px; background: #171717; color: #fff; font-weight: 500">Save</span>
+      </div>
+    </div>
+  </div>
+  <div class="demo-foot" id="csFt">Click any element to inspect</div>
+</div>
+
+<hr>
+
+<!-- ===== SPACING ===== -->
+<h2 id="spacing">Spacing visualization</h2>
+
+<p>Hover any element to see <strong style="color:var(--green)">padding</strong> (green) and <strong style="color:var(--amber)">margin</strong> (amber) rendered as colored zones. Hover below:</p>
+
+<div class="demo">
+  <div class="demo-bar"><span>Box model</span><span class="live">Hover</span></div>
+  <div class="demo-body" style="min-height:140px;cursor:default" id="spBody">
+    <div class="mock" style="padding:20px"><div id="spTgt" style="margin:16px;padding:16px 20px;background:var(--bg2);border:1px solid var(--border);border-radius:8px"><h3 style="font-size:14px;font-weight:600;margin-bottom:2px">Revenue Card</h3><p style="font-size:12px;color:var(--text3);margin:0">$124,500 — up 12%</p></div></div>
+  </div>
+  <div class="demo-foot" id="spFt">Hover the card to see padding and margin zones</div>
+</div>
+
+<hr>
+
+<!-- ===== CONTRAST ===== -->
+<h2 id="contrast">Contrast checking</h2>
+
+<p>Every text element gets its WCAG 2.1 contrast ratio calculated. Pick two colors:</p>
+
+<div class="cc">
+  <div><div style="font-size:11px;color:var(--text3);margin-bottom:3px">Text</div><div class="cc-sw" id="ccFg" style="background:#171717"><input type="color" value="#171717" oninput="updCC(this.value,'fg')"></div></div>
+  <div><div style="font-size:11px;color:var(--text3);margin-bottom:3px">Background</div><div class="cc-sw" id="ccBg" style="background:#ffffff"><input type="color" value="#ffffff" oninput="updCC(this.value,'bg')"></div></div>
+  <div style="text-align:center"><div style="font-family:var(--mono);font-size:18px;font-weight:700" id="ccR">16.0:1</div><div style="display:flex;gap:4px;margin-top:3px"><span id="ccAA" style="padding:2px 8px;border-radius:3px;font-size:10px;font-weight:600;font-family:var(--mono);background:#dcfce7;color:#166534">AA ✓</span><span id="ccAAA" style="padding:2px 8px;border-radius:3px;font-size:10px;font-weight:600;font-family:var(--mono);background:#dcfce7;color:#166534">AAA ✓</span></div></div>
+  <div style="padding:8px 16px;border-radius:6px;font-size:15px;font-weight:600;margin-left:auto" id="ccPv">Sample Text</div>
+</div>
+
+<hr>
+
+<!-- ===== REACT ===== -->
+<h2 id="react">React component detection</h2>
+
+<p>In React apps, MarkupKit reads the fiber tree and includes the component path. Depth adapts to your output level:</p>
+
+<div class="tree"><span>App</span><span class="ar">›</span><span>Dashboard</span><span class="ar">›</span><span>ActionBar</span><span class="ar">›</span><span>ExportButton</span></div>
+
+<ul>
+  <li><strong>Compact</strong> — no React data</li>
+  <li><strong>Standard</strong> — top-level component only</li>
+  <li><strong>Detailed</strong> — filtered tree, framework internals hidden</li>
+  <li><strong>Forensic</strong> — full tree including framework components</li>
+</ul>
+
+<hr>
+
+<!-- ===== OUTPUT ===== -->
+<h2 id="output">Output</h2>
+
+<p>When you copy, you get structured markdown. Four detail levels. Click each tab to see how the same three annotations render at each level:</p>
+
+<div class="out-wrap" id="outWrap">
+  <div class="out-tabs">
+    <button class="out-tab on" onclick="setOut(this,0)">Compact<small>Quick fixes</small></button>
+    <button class="out-tab" onclick="setOut(this,1)">Standard<small>Most cases</small></button>
+    <button class="out-tab" onclick="setOut(this,2)">Detailed<small>Full context</small></button>
+    <button class="out-tab" onclick="setOut(this,3)">Forensic<small>Layout debug</small></button>
+  </div>
+  <div class="out-block"><button class="out-copy" onclick="cpOut()">⎘ Copy</button><div class="out-body" id="outBody"></div></div>
+  <div class="out-hint" id="outHint"></div>
+</div>
+
+<p><strong>Source file detection.</strong> In dev mode, MarkupKit detects the source file and line number for every element. Works with Vite, Next.js, Webpack, and Turbopack. At <code>detailed</code> and <code>forensic</code> levels, the agent gets <code>Source: src/components/Card.tsx:42</code>.</p>
+
+<p><strong>Customizing output.</strong> The copied text is plain markdown. Add context before pasting, reorder by priority, remove irrelevant annotations, or append instructions ("Fix these and run the tests").</p>
+
+<hr>
+
+<!-- ===== SHORTCUTS ===== -->
+<h2 id="shortcuts">Keyboard shortcuts</h2>
+
+<table class="kb">
+  <tr><td><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>D</kbd></td><td>Toggle on/off</td></tr>
+  <tr><td><kbd>Esc</kbd></td><td>Cancel / close</td></tr>
+  <tr><td><kbd>P</kbd></td><td>Pause/resume animations</td></tr>
+  <tr><td><kbd>H</kbd></td><td>Hide/show markers</td></tr>
+  <tr><td><kbd>C</kbd></td><td>Copy all annotations</td></tr>
+  <tr><td><kbd>X</kbd></td><td>Clear all</td></tr>
+  <tr><td><kbd>1</kbd>–<kbd>4</kbd></td><td>Tool: draw / arrow / circle / eraser</td></tr>
+</table>
+
+<p style="font-size:12px;color:var(--text4)">Shortcuts are disabled when typing in an input field.</p>
+
+<hr>
+
+<!-- ===== AGENT SYNC ===== -->
+<h2 id="sync">Agent sync</h2>
+
+<p>With MCP integration, annotations become a two-way conversation:</p>
+
+<div class="chat">
+  <div class="ch"><div class="ch-av u">Y</div><div class="ch-b"><strong>You</strong> circled 2 elements: "Make these the same height"<br><code>div.mc:nth-child(1)</code>, <code>div.mc:nth-child(2)</code></div></div>
+  <div class="ch"><div class="ch-av a">A</div><div class="ch-b"><strong>Agent</strong>: Adding <code>min-height: 120px</code> to <code>.mc</code>.<br><span class="ch-s" style="background:#dcfce7;color:#166534">✓ Resolved</span></div></div>
+  <div class="ch"><div class="ch-av u">Y</div><div class="ch-b"><strong>You</strong> drew arrow: Export → View Details, note: "swap these"</div></div>
+  <div class="ch"><div class="ch-av a">A</div><div class="ch-b"><strong>Agent</strong>: Reverse the array order or use <code>flex-direction: row-reverse</code>?<br><span class="ch-s" style="background:#fef3c7;color:#92400e">? Needs input</span></div></div>
+  <div class="ch"><div class="ch-av u">Y</div><div class="ch-b"><strong>You</strong> struck through "simpl", note: "typo"</div></div>
+  <div class="ch"><div class="ch-av a">A</div><div class="ch-b"><strong>Agent</strong>: Fixed in <code>src/data/quotes.ts:8</code>.<br><span class="ch-s" style="background:#dcfce7;color:#166534">✓ Resolved</span></div></div>
+</div>
+
+<hr>
+
+<!-- ===== SETTINGS ===== -->
+<h2 id="settings">Settings</h2>
+
+<div class="set">
+  <div class="sr"><span class="sl">Output Detail</span><span style="font-family:var(--mono);font-size:11px;color:var(--text4)">Standard</span></div>
+  <div class="sr"><span class="sl">React Components</span><div class="tog on" onclick="this.classList.toggle('on')"></div></div>
+  <div class="sr"><span class="sl">Spacing Viz</span><div class="tog on" onclick="this.classList.toggle('on')"></div></div>
+  <div class="sr"><span class="sl">Contrast Check</span><div class="tog on" onclick="this.classList.toggle('on')"></div></div>
+  <div class="sr"><span class="sl">Block Interactions</span><div class="tog" onclick="this.classList.toggle('on')"></div></div>
+  <div class="sr"><span class="sl">Clear on Copy</span><div class="tog" onclick="this.classList.toggle('on')"></div></div>
+  <div class="sr"><span class="sl">Persist (localStorage)</span><div class="tog on" onclick="this.classList.toggle('on')"></div></div>
+  <div class="sr"><span class="sl">Source File Detection</span><div class="tog on" onclick="this.classList.toggle('on')"></div></div>
+</div>
+
+<hr>
+
+<!-- ===== INSTALL ===== -->
+<h2 id="install">Installation</h2>
+
+<p>Get started with MarkupKit in your project.</p>
+
+<h3 style="font-size:15px;font-weight:600;margin-top:24px;margin-bottom:8px">Choose your setup</h3>
+<ul>
+  <li><strong>Just want annotations?</strong> → Basic Setup below (copy-paste to agent)</li>
+  <li><strong>Using Claude Code?</strong> → Use the skill for auto-setup</li>
+  <li><strong>Building custom tools?</strong> → Use the programmatic API</li>
+</ul>
+
+<h3 style="font-size:15px;font-weight:600;margin-top:24px;margin-bottom:8px">Install the package</h3>
+
+<div class="cbl">
+  <div class="cbl-h"><div class="d"><i></i><i></i><i></i></div><span>terminal</span></div>
+  <pre>npm install markupkit -D</pre>
+</div>
+
+<p style="font-size:13px;color:var(--text3)">Or use yarn, pnpm, or bun.</p>
+
+<h3 style="font-size:15px;font-weight:600;margin-top:24px;margin-bottom:8px">Add to your app</h3>
+
+<p>Add the component anywhere in your React app, ideally at the root level. The <code>NODE_ENV</code> check ensures it only loads in development.</p>
+
+<div class="cbl">
+  <div class="cbl-h"><div class="d"><i></i><i></i><i></i></div><span>layout.tsx</span></div>
+  <pre><span class="ckw">import</span> { <span class="cfn">Markup</span> } <span class="ckw">from</span> <span class="cstr">'markupkit'</span>
+
+<span class="ckw">function</span> <span class="cfn">App</span>() {
+  <span class="ckw">return</span> (
+    &lt;&gt;
+      &lt;<span class="ctag">YourApp</span> /&gt;
+      {process.env.NODE_ENV === <span class="cstr">"development"</span> &amp;&amp;
+        &lt;<span class="ctag">Markup</span> /&gt;
+      }
+    &lt;/&gt;
+  )
+}</pre>
+</div>
+
+<h3 style="font-size:15px;font-weight:600;margin-top:24px;margin-bottom:8px">Claude Code</h3>
+
+<p>If you use Claude Code, set up MarkupKit automatically:</p>
+
+<div class="cbl">
+  <div class="cbl-h"><div class="d"><i></i><i></i><i></i></div><span>terminal</span></div>
+  <pre>npx skills add dragoon0x/markupkit</pre>
+</div>
+
+<p>Then in Claude Code:</p>
+
+<div class="cbl">
+  <div class="cbl-h"><div class="d"><i></i><i></i><i></i></div><span>Claude Code</span></div>
+  <pre>/markupkit</pre>
+</div>
+
+<p>Detects your framework, installs the package, wires it into your layout.</p>
+
+<h3 style="font-size:15px;font-weight:600;margin-top:24px;margin-bottom:8px">Agent integration</h3>
+
+<p>Connect MarkupKit to any AI coding agent that supports MCP. This enables real-time annotation syncing and bidirectional communication.</p>
+
+<p><strong>1. Add the MCP server</strong></p>
+
+<div class="cbl">
+  <div class="cbl-h"><div class="d"><i></i><i></i><i></i></div><span>terminal</span></div>
+  <pre>npx add-mcp "npx -y markupkit-mcp server"</pre>
+</div>
+
+<p style="font-size:13px;color:var(--text3)">Auto-detects your installed agents (Claude Code, Cursor, Codex, Windsurf, etc.) and writes the correct config.</p>
+
+<p><strong>2. Verify setup</strong></p>
+
+<div class="cbl">
+  <div class="cbl-h"><div class="d"><i></i><i></i><i></i></div><span>terminal</span></div>
+  <pre>npx markupkit-mcp doctor</pre>
+</div>
+
+<p><strong>3. Connect the component</strong></p>
+
+<div class="cbl">
+  <div class="cbl-h"><div class="d"><i></i><i></i><i></i></div><span>layout.tsx</span></div>
+  <pre>&lt;<span class="ctag">Markup</span>
+  <span class="cattr">endpoint</span>=<span class="cstr">"http://localhost:4747"</span>
+  <span class="cattr">onSessionCreated</span>={(<span class="cfn">id</span>) =&gt; console.log(<span class="cstr">"Session:"</span>, <span class="cfn">id</span>)}
+/&gt;</pre>
+</div>
+
+<ul>
+  <li><strong>Local-first</strong> — works offline, syncs when server is available</li>
+  <li><strong>Session continuity</strong> — rejoins the same session on page refresh</li>
+  <li><strong>No duplicates</strong> — only new annotations are uploaded</li>
+  <li><strong>Server authority</strong> — agent changes (resolve, dismiss) take precedence</li>
+</ul>
+
+<h3 style="font-size:15px;font-weight:600;margin-top:24px;margin-bottom:8px">Requirements</h3>
+<ul>
+  <li><strong>React 18+</strong> — uses modern React features</li>
+  <li><strong>Client-side only</strong> — requires DOM access</li>
+  <li><strong>Zero dependencies</strong> — no runtime deps beyond React</li>
+  <li><strong>~7.3kb gzipped</strong> — tree-shakeable ESM and CJS</li>
+</ul>
+
+<h3 style="font-size:15px;font-weight:600;margin-top:24px;margin-bottom:8px">Security</h3>
+<p>MarkupKit runs in your browser and reads DOM content to generate feedback. By default, it does <strong>not</strong> send data anywhere — everything stays local until you manually copy.</p>
+<ul>
+  <li><strong>No external requests</strong> — all processing is client-side by default</li>
+  <li><strong>Local server only</strong> — the <code>endpoint</code> prop sends data to localhost only</li>
+  <li><strong>No data collection</strong> — nothing is tracked or stored remotely</li>
+  <li><strong>Dev-only</strong> — use the <code>NODE_ENV</code> check to exclude from production</li>
+</ul>
+
+<hr>
+
+<!-- ===== API ===== -->
+<h2 id="api">API</h2>
+
+<p>Programmatic access for developers. MarkupKit exposes callbacks, types, an HTTP API, and real-time events for building custom integrations.</p>
+
+<ul>
+  <li>Sync annotations to a database or backend</li>
+  <li>Build analytics dashboards tracking feedback patterns</li>
+  <li>Create custom AI integrations (MCP servers, agent tools)</li>
+  <li>Pipe drawing gestures and detected elements to terminal or CI</li>
+</ul>
+
+<!-- PROPS -->
+<h3 id="props" style="font-size:15px;font-weight:600;margin-top:32px;margin-bottom:8px;scroll-margin-top:24px">Props</h3>
+
+<p>All props are optional. The component works with zero configuration.</p>
+
+<table class="kb" style="margin-bottom:24px">
+  <tr><td><code>onAnnotationAdd</code></td><td>Fired when an annotation is created (receives <code>Annotation</code>)</td></tr>
+  <tr><td><code>onAnnotationDelete</code></td><td>Fired when an annotation is deleted</td></tr>
+  <tr><td><code>onAnnotationUpdate</code></td><td>Fired when a note is edited</td></tr>
+  <tr><td><code>onAnnotationsClear</code></td><td>Fired when all annotations are cleared</td></tr>
+  <tr><td><code>onCopy</code></td><td>Fired when copy is clicked (receives markdown string)</td></tr>
+  <tr><td><code>onDraw</code></td><td>Fired per-stroke with shape detection result</td></tr>
+  <tr style="border-top:2px solid var(--border)"><td><code>enabled</code></td><td>Enable/disable the component (default: <code>true</code>)</td></tr>
+  <tr><td><code>color</code></td><td>Stroke color (default: <code>"#171717"</code>)</td></tr>
+  <tr><td><code>strokeWidth</code></td><td>Stroke width in px (default: <code>3</code>)</td></tr>
+  <tr><td><code>tool</code></td><td>Active tool: <code>"draw"</code> | <code>"arrow"</code> | <code>"circle"</code> | <code>"eraser"</code></td></tr>
+  <tr><td><code>detail</code></td><td>Output detail: <code>"compact"</code> | <code>"standard"</code> | <code>"detailed"</code> | <code>"forensic"</code></td></tr>
+  <tr><td><code>toolbar</code></td><td>Show floating toolbar (default: <code>true</code>)</td></tr>
+  <tr><td><code>position</code></td><td><code>"bottom-right"</code> | <code>"bottom-left"</code> | <code>"top-right"</code> | <code>"top-left"</code></td></tr>
+  <tr><td><code>root</code></td><td>CSS selector for scan scope (default: <code>"body"</code>)</td></tr>
+  <tr><td><code>ignore</code></td><td>Array of selectors to skip during element resolution</td></tr>
+  <tr><td><code>shortcut</code></td><td>Keyboard shortcut (default: <code>"ctrl+shift+d"</code>)</td></tr>
+  <tr><td><code>copyToClipboard</code></td><td>Auto-copy on add (default: <code>true</code>)</td></tr>
+  <tr style="border-top:2px solid var(--border)"><td><code>endpoint</code></td><td>MCP server URL for syncing annotations</td></tr>
+  <tr><td><code>sessionId</code></td><td>Pre-existing session ID to rejoin</td></tr>
+  <tr><td><code>onSessionCreated</code></td><td>Fired when a new session is created (receives <code>sessionId</code>)</td></tr>
+</table>
+
+<!-- BASIC USAGE -->
+<h3 style="font-size:15px;font-weight:600;margin-top:24px;margin-bottom:8px">Basic usage</h3>
+
+<div class="cbl">
+  <div class="cbl-h"><div class="d"><i></i><i></i><i></i></div><span>app.tsx</span></div>
+  <pre><span class="ckw">import</span> { <span class="cfn">Markup</span>, <span class="cfn">Annotation</span> } <span class="ckw">from</span> <span class="cstr">'markupkit'</span>
+
+<span class="ckw">function</span> <span class="cfn">App</span>() {
+  <span class="ckw">const</span> <span class="cfn">handleAdd</span> = (<span class="cfn">a</span>: <span class="ctag">Annotation</span>) =&gt; {
+    console.log(a.shape.type, a.elements, a.note)
+    <span style="color:#666">// → "circle", [{selector: "div.mc", text: "Revenue"}], "fix height"</span>
+  }
+
+  <span class="ckw">const</span> <span class="cfn">handleDraw</span> = (<span class="cfn">stroke</span>) =&gt; {
+    console.log(stroke.shape, stroke.confidence)
+    <span style="color:#666">// → "arrow", 0.92</span>
+  }
+
+  <span class="ckw">return</span> (
+    &lt;&gt;
+      &lt;<span class="ctag">YourApp</span> /&gt;
+      &lt;<span class="ctag">Markup</span>
+        <span class="cattr">onAnnotationAdd</span>={<span class="cfn">handleAdd</span>}
+        <span class="cattr">onDraw</span>={<span class="cfn">handleDraw</span>}
+        <span class="cattr">detail</span>=<span class="cstr">"detailed"</span>
+      /&gt;
+    &lt;/&gt;
+  )
+}</pre>
+</div>
+
+<!-- TYPES -->
+<h3 id="types" style="font-size:15px;font-weight:600;margin-top:32px;margin-bottom:8px;scroll-margin-top:24px">Types</h3>
+
+<p>The <code>Annotation</code> object passed to callbacks:</p>
+
+<div class="cbl">
+  <div class="cbl-h"><div class="d"><i></i><i></i><i></i></div><span>types.ts</span></div>
+  <pre><span class="ckw">type</span> <span class="ctag">Annotation</span> = {
+  <span class="cattr">id</span>: <span class="cfn">string</span>                <span style="color:#666">// Unique identifier</span>
+  <span class="cattr">note</span>: <span class="cfn">string</span>              <span style="color:#666">// User's note text</span>
+  <span class="cattr">timestamp</span>: <span class="cfn">number</span>         <span style="color:#666">// Unix timestamp (ms)</span>
+
+  <span class="cattr">shape</span>: {
+    <span class="cattr">type</span>: <span class="cstr">'circle'</span> | <span class="cstr">'arrow'</span> | <span class="cstr">'strikethrough'</span>
+          | <span class="cstr">'underline'</span> | <span class="cstr">'cross'</span> | <span class="cstr">'rectangle'</span> | <span class="cstr">'freehand'</span>
+    <span class="cattr">confidence</span>: <span class="cfn">number</span>       <span style="color:#666">// 0-1 shape detection score</span>
+    <span class="cattr">bounds</span>: { <span class="cattr">x</span>: <span class="cfn">number</span>; <span class="cattr">y</span>: <span class="cfn">number</span>; <span class="cattr">width</span>: <span class="cfn">number</span>; <span class="cattr">height</span>: <span class="cfn">number</span> }
+    <span class="cattr">head</span>?: <span class="ctag">Point</span>            <span style="color:#666">// Arrow endpoint</span>
+    <span class="cattr">tail</span>?: <span class="ctag">Point</span>            <span style="color:#666">// Arrow start</span>
+  }
+
+  <span class="cattr">elements</span>: {
+    <span class="cattr">selector</span>: <span class="cfn">string</span>        <span style="color:#666">// CSS selector path</span>
+    <span class="cattr">tag</span>: <span class="cfn">string</span>             <span style="color:#666">// "button", "div", etc.</span>
+    <span class="cattr">text</span>: <span class="cfn">string</span>            <span style="color:#666">// Text content (first 100 chars)</span>
+    <span class="cattr">component</span>: <span class="cfn">string</span> | <span class="cfn">null</span> <span style="color:#666">// React component name</span>
+    <span class="cattr">rect</span>: { <span class="cattr">x</span>; <span class="cattr">y</span>; <span class="cattr">width</span>; <span class="cattr">height</span> }
+    <span class="cattr">classes</span>: <span class="cfn">string</span>         <span style="color:#666">// CSS classes</span>
+    <span class="cattr">id</span>: <span class="cfn">string</span>              <span style="color:#666">// Element ID</span>
+  }[]
+
+  <span class="cattr">intent</span>: <span class="cfn">string</span>            <span style="color:#666">// "Circled 2 elements — area needs review"</span>
+}
+
+<span class="ckw">type</span> <span class="ctag">ShapeType</span> = <span class="cstr">'circle'</span> | <span class="cstr">'arrow'</span> | <span class="cstr">'strikethrough'</span>
+  | <span class="cstr">'underline'</span> | <span class="cstr">'cross'</span> | <span class="cstr">'rectangle'</span> | <span class="cstr">'freehand'</span>
+
+<span class="ckw">type</span> <span class="ctag">OutputDetail</span> = <span class="cstr">'compact'</span> | <span class="cstr">'standard'</span> | <span class="cstr">'detailed'</span> | <span class="cstr">'forensic'</span>
+
+<span class="ckw">type</span> <span class="ctag">ToolMode</span> = <span class="cstr">'draw'</span> | <span class="cstr">'arrow'</span> | <span class="cstr">'circle'</span> | <span class="cstr">'eraser'</span></pre>
+</div>
+
+<!-- HTTP API -->
+<h3 id="http" style="font-size:15px;font-weight:600;margin-top:32px;margin-bottom:8px;scroll-margin-top:24px">HTTP API</h3>
+
+<p>The <code>markupkit-mcp</code> server provides a REST API for programmatic access. Server runs on port 4747 by default.</p>
+
+<p><strong>Sessions</strong></p>
+
+<table class="kb" style="margin-bottom:16px">
+  <tr><td style="color:var(--green);width:50px">POST</td><td style="width:200px"><code>/sessions</code></td><td>Create a new session</td></tr>
+  <tr><td style="color:var(--text3)">GET</td><td><code>/sessions</code></td><td>List all sessions</td></tr>
+  <tr><td style="color:var(--text3)">GET</td><td><code>/sessions/:id</code></td><td>Get session with annotations</td></tr>
+</table>
+
+<p><strong>Annotations</strong></p>
+
+<table class="kb" style="margin-bottom:16px">
+  <tr><td style="color:var(--green);width:50px">POST</td><td style="width:200px"><code>/sessions/:id/annotations</code></td><td>Add annotation</td></tr>
+  <tr><td style="color:var(--text3)">GET</td><td><code>/annotations/:id</code></td><td>Get annotation</td></tr>
+  <tr><td style="color:var(--amber)">PATCH</td><td><code>/annotations/:id</code></td><td>Update annotation</td></tr>
+  <tr><td style="color:var(--red)">DELETE</td><td><code>/annotations/:id</code></td><td>Delete annotation</td></tr>
+  <tr><td style="color:var(--green)">POST</td><td><code>/annotations/:id/thread</code></td><td>Add thread message</td></tr>
+  <tr><td style="color:var(--text3)">GET</td><td><code>/sessions/:id/pending</code></td><td>Get pending annotations</td></tr>
+</table>
+
+<p><strong>Drawings</strong></p>
+
+<table class="kb" style="margin-bottom:16px">
+  <tr><td style="color:var(--text3);width:50px">GET</td><td style="width:200px"><code>/sessions/:id/strokes</code></td><td>Get all strokes with shape data</td></tr>
+  <tr><td style="color:var(--text3)">GET</td><td><code>/sessions/:id/shapes</code></td><td>Get detected shapes only</td></tr>
+  <tr><td style="color:var(--text3)">GET</td><td><code>/sessions/:id/elements</code></td><td>Get resolved elements</td></tr>
+  <tr><td style="color:var(--text3)">GET</td><td><code>/sessions/:id/design-dna</code></td><td>Get full design system scan</td></tr>
+</table>
+
+<p><strong>Health</strong></p>
+
+<table class="kb" style="margin-bottom:16px">
+  <tr><td style="color:var(--text3);width:50px">GET</td><td style="width:200px"><code>/health</code></td><td>Health check</td></tr>
+  <tr><td style="color:var(--text3)">GET</td><td><code>/status</code></td><td>Server status</td></tr>
+</table>
+
+<!-- EVENTS -->
+<h3 id="events" style="font-size:15px;font-weight:600;margin-top:32px;margin-bottom:8px;scroll-margin-top:24px">Real-time events</h3>
+
+<p>Subscribe to real-time events via Server-Sent Events:</p>
+
+<div class="cbl">
+  <div class="cbl-h"><div class="d"><i></i><i></i><i></i></div><span>terminal</span></div>
+  <pre><span style="color:#666"># Session-level: events for a single page</span>
+curl -N http://localhost:4747/sessions/:id/events
+
+<span style="color:#666"># Global: events across all sessions</span>
+curl -N http://localhost:4747/events
+
+<span style="color:#666"># Filtered by domain</span>
+curl -N "http://localhost:4747/events?domain=localhost:3001"
+
+<span style="color:#666"># Reconnect after disconnect (replay missed events)</span>
+curl -N -H "Last-Event-ID: 42" http://localhost:4747/sessions/:id/events</pre>
+</div>
+
+<p><strong>Event types:</strong></p>
+
+<ul>
+  <li><code>annotation.created</code> — new annotation added</li>
+  <li><code>annotation.updated</code> — annotation modified</li>
+  <li><code>annotation.deleted</code> — annotation removed</li>
+  <li><code>stroke.created</code> — new drawing stroke recorded</li>
+  <li><code>shape.detected</code> — shape classified from stroke</li>
+  <li><code>element.resolved</code> — DOM elements matched to shape</li>
+  <li><code>session.created</code> — new session started</li>
+  <li><code>session.closed</code> — session closed</li>
+  <li><code>thread.message</code> — new message in annotation thread</li>
+  <li><code>design.scanned</code> — full design DNA scan completed</li>
+</ul>
+
+<h3 style="font-size:15px;font-weight:600;margin-top:24px;margin-bottom:8px">Programmatic usage</h3>
+
+<p>Use the core functions without the React component:</p>
+
+<div class="cbl">
+  <div class="cbl-h"><div class="d"><i></i><i></i><i></i></div><span>script.ts</span></div>
+  <pre><span class="ckw">import</span> {
+  <span class="cfn">detectShape</span>,
+  <span class="cfn">resolveShape</span>,
+  <span class="cfn">formatSession</span>,
+  <span class="cfn">formatSingleAnnotation</span>,
+  <span class="cfn">smoothPoints</span>,
+  <span class="cfn">strokeBounds</span>
+} <span class="ckw">from</span> <span class="cstr">'markupkit'</span>
+
+<span style="color:#666">// Detect shape from raw stroke points</span>
+<span class="ckw">const</span> shape = <span class="cfn">detectShape</span>(stroke)
+<span style="color:#666">// → { type: 'circle', confidence: 0.87, bounds: {...} }</span>
+
+<span style="color:#666">// Resolve shape to DOM elements</span>
+<span class="ckw">const</span> annotation = <span class="cfn">resolveShape</span>(shape)
+<span style="color:#666">// → { elements: [{selector, text, component}], intent: "Circled 2 elements" }</span>
+
+<span style="color:#666">// Generate markdown output</span>
+<span class="ckw">const</span> md = <span class="cfn">formatSession</span>(session, <span class="cstr">'detailed'</span>)
+<span style="color:#666">// → "# MarkupKit Feedback\n3 annotations on..."</span></pre>
+</div>
+
+<h3 style="font-size:15px;font-weight:600;margin-top:24px;margin-bottom:8px">Environment variables</h3>
+
+<table class="kb">
+  <tr><td><code>MARKUPKIT_STORE</code></td><td>Storage backend: <code>memory</code> or <code>sqlite</code> (default: sqlite)</td></tr>
+  <tr><td><code>MARKUPKIT_PORT</code></td><td>Server port (default: 4747)</td></tr>
+  <tr><td><code>MARKUPKIT_EVENT_RETENTION_DAYS</code></td><td>Days to keep events (default: 7)</td></tr>
+</table>
+
+<p style="font-size:12px;color:var(--text4);margin-top:24px">~7.3kb gzipped · zero dependencies · React 18+ · MIT</p>
+
+</main>
+</div>
+
+<footer>
+  <a href="https://github.com/dragoon0x/markupkit">GitHub</a> · <a href="https://www.npmjs.com/package/markupkit">npm</a>
+</footer>
+
+<script>
+// ===== OUTPUT DATA =====
+const OUT=[
+`<span class="ow"># MarkupKit</span>
+<span class="ow">3 annotations</span> on localhost:3000/dashboard
+
+<span class="ow">1.</span> <span class="os">⭕ circle</span> \`div.mc\` × 2 — "Make these cards the same height"
+<span class="ow">2.</span> <span class="os">➡ arrow</span> \`span.mbtn.pr\` → \`span.mbtn.sc\` — "Swap positions"
+<span class="ow">3.</span> <span class="os">~~ strike</span> \`span\` text "simpl" — "Typo"`,
+
+`<span class="ow"># MarkupKit Feedback</span>
+<span class="ow">3 annotations</span> on localhost:3000/dashboard
+Viewport: 1440×900 · Summary: 1 circle · 1 arrow · 1 strikethrough
+
+---
+
+<span class="ow">## Annotation 1</span>
+<span class="ow">⭕ circle:</span> Circled 2 elements — area needs review
+<span class="os">&gt; Make these cards the same height</span>
+
+- <span class="og">\`div.mc:nth-child(1)\`</span>
+  Component: <span class="oa">RevenueCard</span>
+  Text: "Monthly Revenue — $124,500"
+- <span class="og">\`div.mc:nth-child(2)\`</span>
+  Component: <span class="oa">UsersCard</span>
+  Text: "Active Users — 8,241"
+
+<span class="ow">## Annotation 2</span>
+<span class="ow">➡ arrow:</span> Arrow from button to button
+<span class="os">&gt; Swap positions</span>
+
+- <span class="og">\`span.mbtn.pr\`</span> Text: "Export Report"
+- <span class="og">\`span.mbtn.sc\`</span> Text: "View Details"
+
+<span class="ow">## Annotation 3</span>
+<span class="ow">~~ strikethrough:</span> Struck through text
+<span class="os">&gt; Typo: should be "simple"</span>
+
+- <span class="og">\`span\`</span> Text: "simpl"`,
+
+`<span class="ow"># MarkupKit Feedback</span>
+<span class="ow">3 annotations</span> on localhost:3000/dashboard
+Viewport: 1440×900 · Scanned: 142 elements · 2 fonts · 8 colors
+
+---
+
+<span class="ow">## Annotation 1</span>
+<span class="ow">⭕ circle (confidence: 0.87):</span> Circled 2 elements
+<span class="os">&gt; Make these cards the same height</span>
+
+- <span class="og">\`div.mc:nth-child(1)\`</span>
+  Component: <span class="oa">App &gt; Dashboard &gt; RevenueCard</span>
+  Text: "Monthly Revenue — $124,500"
+  Rect: 32, 128, 352×120
+  Source: <span class="or">src/components/RevenueCard.tsx:18</span>
+  Contrast (h3): 16.0:1 ✓ AAA
+- <span class="og">\`div.mc:nth-child(2)\`</span>
+  Component: <span class="oa">App &gt; Dashboard &gt; UsersCard</span>
+  Rect: 32, 260, 352×98
+  Source: <span class="or">src/components/UsersCard.tsx:12</span>
+
+<span class="ow">## Annotation 2</span>
+<span class="ow">➡ arrow (confidence: 0.92):</span> from button → button
+<span class="os">&gt; Swap positions</span>
+
+- <span class="og">\`span.mbtn.pr\`</span> "Export Report"
+  Source: <span class="or">src/components/ActionBar.tsx:24</span>
+  Contrast: 16.0:1 ✓ AAA
+- <span class="og">\`span.mbtn.sc\`</span> "View Details"
+  Source: <span class="or">src/components/ActionBar.tsx:28</span>
+
+<span class="ow">## Annotation 3</span>
+<span class="ow">~~ strikethrough (confidence: 0.95):</span> text removal
+<span class="os">&gt; Typo: should be "simple"</span>
+
+- <span class="og">\`blockquote &gt; span\`</span> Text: "simpl"
+  Source: <span class="or">src/data/quotes.ts:8</span>`,
+
+`<span class="ow"># MarkupKit Feedback — Forensic</span>
+<span class="ow">3 annotations</span> on localhost:3000/dashboard
+Viewport: 1440×900 · DPR: 2 · Scroll: 0, 0
+Scanned: 142 elements · Baseline rhythm: 24px · Grid: 32, 400, 768
+
+---
+
+<span class="ow">## Annotation 1</span>
+<span class="ow">⭕ circle (confidence: 0.87):</span> Circled 2 elements
+<span class="os">&gt; Make these cards the same height</span>
+Gesture bounds: 18, 118, 380×254
+
+- <span class="og">\`div.mc:nth-child(1)\`</span>
+  Component: <span class="oa">App &gt; StrictMode &gt; Dashboard &gt; Grid &gt; RevenueCard</span>
+  Source: <span class="or">src/components/RevenueCard.tsx:18</span>
+  Styles:
+    <span class="os">padding:</span> 12px 14px
+    <span class="os">border-radius:</span> 8px
+    <span class="os">background:</span> #fafafa
+    <span class="os">border:</span> 1px solid #e8e8e8
+    <span class="os">font-size:</span> 14px
+    <span class="os">margin-bottom:</span> 8px
+  Spacing: pad 12/14/12/14 · mar 0/0/8/0
+  Contrast (h3): 16.0:1 ✓ AAA
+  Contrast (p): 5.9:1 ✓ AA
+
+- <span class="og">\`div.mc:nth-child(2)\`</span>
+  Component: <span class="oa">App &gt; StrictMode &gt; Dashboard &gt; Grid &gt; UsersCard</span>
+  Source: <span class="or">src/components/UsersCard.tsx:12</span>
+  Styles:
+    <span class="os">padding:</span> 12px 14px
+    <span class="os">border-radius:</span> 8px
+    <span class="os">background:</span> #fafafa
+
+<span class="ow">## Annotation 2</span>
+<span class="ow">➡ arrow (confidence: 0.92):</span> from button → button
+<span class="os">&gt; Swap positions</span>
+Gesture bounds: 28, 388, 260×42 · Distance: 140px
+
+- <span class="og">\`span.mbtn.pr\`</span> "Export Report"
+  Source: <span class="or">src/components/ActionBar.tsx:24</span>
+  Styles:
+    <span class="os">padding:</span> 6px 14px
+    <span class="os">background:</span> #171717
+    <span class="os">color:</span> #ffffff
+    <span class="os">font-weight:</span> 500
+    <span class="os">cursor:</span> pointer
+  Contrast: 16.0:1 ✓ AAA
+
+<span class="ow">## Annotation 3</span>
+<span class="ow">~~ strikethrough (confidence: 0.95):</span> text removal
+<span class="os">&gt; Typo: should be "simple"</span>
+Gesture bounds: 44, 376, 180×6
+
+- <span class="og">\`blockquote &gt; span\`</span> Text: "simpl"
+  Source: <span class="or">src/data/quotes.ts:8</span>
+  Styles:
+    <span class="os">color:</span> #dc2626
+    <span class="os">font-style:</span> italic
+  Contrast (on #fafafa): 4.7:1 ✓ AA`
+];
+const OHINT=['Minimal. Just the intent, selector, and note.','Balanced detail. Adds text content, component names, context.','Full context. Bounding boxes, source files, contrast ratios.','Maximum detail. Computed styles, spacing values, grid data.'];
+function setOut(b,i){b.parentElement.querySelectorAll('.out-tab').forEach(t=>t.classList.remove('on'));b.classList.add('on');document.getElementById('outBody').innerHTML=OUT[i];document.getElementById('outHint').textContent=OHINT[i]}
+setOut(document.querySelector('.out-tab'),0);
+function cpOut(){const b=document.querySelector('.out-copy');navigator.clipboard.writeText(document.getElementById('outBody').textContent).then(()=>{b.textContent='✓ Copied';setTimeout(()=>b.textContent='⎘ Copy',1500)})}
+
+// ===== DRAWING ENGINE =====
+let mode='draw';const cv=document.getElementById('mCv'),bd=document.getElementById('mBody'),ft=document.getElementById('mFt'),np=document.getElementById('mNote'),ni=document.getElementById('mNI'),cx=cv.getContext('2d');
+let sk=[],an=[],cur=[],drw=false,pend=null,W,H;
+const HN={draw:'Draw circles, arrows, or lines',text:'Select text in the quote',click:'Click any element',multi:'Click multiple elements',area:'Drag to select a region',pause:'Animations paused'};
+function setMode(b,m){mode=m;b.parentElement.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));b.classList.add('on');ft.textContent=HN[m]||'';ft.classList.remove('has');bd.style.cursor=m==='draw'||m==='area'?'crosshair':'pointer';bd.style.userSelect=m==='text'?'text':'none';cv.style.pointerEvents=m==='draw'||m==='area'?'auto':'none'}
+function rsz(){const r=bd.getBoundingClientRect(),d=devicePixelRatio||1;cv.width=r.width*d;cv.height=r.height*d;cv.style.width=r.width+'px';cv.style.height=r.height+'px';cx.setTransform(d,0,0,d,0,0);W=r.width;H=r.height;rdr()}
+rsz();addEventListener('resize',rsz);
+cv.addEventListener('pointerdown',e=>{if(pend)return;e.preventDefault();drw=true;cur=[pt(e)];cv.setPointerCapture(e.pointerId)});
+cv.addEventListener('pointermove',e=>{if(!drw)return;e.preventDefault();cur.push(pt(e));rdr()});
+cv.addEventListener('pointerup',()=>{if(!drw)return;drw=false;if(cur.length>3){sk.push([...cur]);pend=[...cur];shN()}cur=[];rdr()});
+function pt(e){const r=bd.getBoundingClientRect();return{x:e.clientX-r.x,y:e.clientY-r.y,t:Date.now()}}
+function shN(){const b=bnd(pend);let px=b.x+b.w/2-100,py=b.y+b.h+10;px=Math.max(4,Math.min(px,W-260));py=Math.max(4,Math.min(py,H-40));np.style.left=px+'px';np.style.top=py+'px';np.classList.add('show');ni.value='';ni.focus()}
+function subN(){const n=ni.value.trim();np.classList.remove('show');if(pend){det(pend,n);pend=null}}
+function skN(){np.classList.remove('show');if(pend){det(pend,'');pend=null}}
+ni.addEventListener('keydown',e=>{if(e.key==='Enter')subN();if(e.key==='Escape')skN()});
+bd.addEventListener('click',e=>{if(mode==='click'||mode==='multi'){const el=e.target.closest('.mc,.mbtn,.mnav a,.minp,.quote');if(!el||el.closest('canvas')||el.closest('.npop'))return;const r=el.getBoundingClientRect(),br=bd.getBoundingClientRect();an.push({b:{x:r.x-br.x,y:r.y-br.y,w:r.width,h:r.height},n:'',color:mode==='multi'?'#16a34a':'#171717'});rdr();ft.innerHTML='<span class="dt">#'+an.length+'</span> <code>'+el.tagName.toLowerCase()+(el.className?'.'+el.className.trim().split(/\s+/)[0]:'')+'</code> "'+el.textContent.trim().slice(0,30)+'"';ft.classList.add('has')}});
+bd.addEventListener('mouseup',()=>{if(mode==='text'){const s=window.getSelection(),t=s.toString().trim();if(t.length>0){an.push({b:{x:0,y:0,w:0,h:0},n:'',text:t});ft.innerHTML='<span class="dt">Selected:</span> "'+t.slice(0,50)+'"';ft.classList.add('has');s.removeAllRanges()}}});
+function rdr(){cx.clearRect(0,0,W,H);for(const s of sk)dS(s);if(cur.length>1)dS(cur);for(let i=0;i<an.length;i++){const a=an[i],b=a.b;if(!b.w&&!b.h)continue;const bx=b.x+b.w+5,by=Math.max(11,b.y-1),c=a.color||'#171717';cx.fillStyle=c;cx.globalAlpha=.95;cx.beginPath();cx.arc(bx,by,10,0,Math.PI*2);cx.fill();cx.globalAlpha=1;cx.fillStyle='#fff';cx.font='600 9px Inter,sans-serif';cx.textAlign='center';cx.fillText(i+1,bx,by+3);cx.textAlign='start';if(a.n){cx.font='500 10px Inter,sans-serif';const tw=cx.measureText(a.n).width;cx.fillStyle=c;cx.globalAlpha=.9;cx.beginPath();cx.roundRect(bx+14,by-9,tw+12,20,5);cx.fill();cx.globalAlpha=1;cx.fillStyle='#fff';cx.fillText(a.n,bx+20,by+4)}}}
+function dS(p){if(p.length<2)return;cx.lineCap='round';cx.lineJoin='round';cx.globalAlpha=.06;cx.strokeStyle='#171717';cx.lineWidth=10;cx.beginPath();cx.moveTo(p[0].x,p[0].y);for(let i=1;i<p.length;i++){const a=p[i-1],b=p[i];cx.quadraticCurveTo(a.x,a.y,(a.x+b.x)/2,(a.y+b.y)/2)}cx.stroke();for(let i=1;i<p.length;i++){const a=p[i-1],b=p[i],dx=b.x-a.x,dy=b.y-a.y,dt=Math.max(1,b.t-a.t),sp=Math.sqrt(dx*dx+dy*dy)/dt;cx.globalAlpha=.65;cx.strokeStyle='#171717';cx.lineWidth=Math.max(1.2,Math.min(3,2.5-sp*.012));cx.beginPath();cx.moveTo(a.x,a.y);if(i<p.length-1){const c=p[i+1];cx.quadraticCurveTo(b.x,b.y,(b.x+c.x)/2,(b.y+c.y)/2)}else cx.lineTo(b.x,b.y);cx.stroke()}cx.globalAlpha=1;const sh=clf(p);if(sh==='arrow'&&p.length>4){const tip=p[p.length-1],pv=p[Math.max(0,p.length-6)],a=Math.atan2(tip.y-pv.y,tip.x-pv.x);cx.fillStyle='#171717';cx.globalAlpha=.65;cx.beginPath();cx.moveTo(tip.x,tip.y);cx.lineTo(tip.x-12*Math.cos(a-.45),tip.y-12*Math.sin(a-.45));cx.lineTo(tip.x-12*Math.cos(a+.45),tip.y-12*Math.sin(a+.45));cx.closePath();cx.fill();cx.globalAlpha=1}}
+function det(p,note){const b=bnd(p),sh=clf(p);const m=bd.querySelector('.mock');if(!m)return;const hits=[],br=bd.getBoundingClientRect();for(const el of m.querySelectorAll('*')){if(el.closest('canvas')||el.closest('.npop'))continue;const r=el.getBoundingClientRect(),l={x:r.x-br.x,y:r.y-br.y,w:r.width,h:r.height};if(l.w<5||l.h<5)continue;const ecx=l.x+l.w/2,ecy=l.y+l.h/2;if(sh==='circle'||sh==='freehand'){if(ecx>b.x&&ecx<b.x+b.w&&ecy>b.y&&ecy<b.y+b.h){const t=el.textContent?.trim().slice(0,50);if(t&&el.children.length===0)hits.push({tag:el.tagName.toLowerCase(),text:t,cls:el.className||''})}}else if(sh==='strikethrough'){const my=b.y+b.h/2;if(my>l.y&&my<l.y+l.h&&l.x<b.x+b.w&&l.x+l.w>b.x){const t=el.textContent?.trim().slice(0,60);if(t&&el.children.length===0)hits.push({tag:el.tagName.toLowerCase(),text:t,cls:el.className||''})}}else if(sh==='arrow'){const st=p[0],en=p[p.length-1],dSt=Math.sqrt((ecx-st.x)**2+(ecy-st.y)**2),dEn=Math.sqrt((ecx-en.x)**2+(ecy-en.y)**2);if(dSt<60||dEn<60){const t=el.textContent?.trim().slice(0,50);if(t&&el.children.length===0)hits.push({tag:el.tagName.toLowerCase(),text:t,cls:el.className||''})}}}an.push({sh,b,n:note,h:hits});rdr();if(hits.length>0){const ic=sh==='circle'?'⭕':sh==='arrow'?'➡':sh==='strikethrough'?'—':'✏';const act=sh==='circle'||sh==='freehand'?'Circled':sh==='strikethrough'?'Struck through':'Arrow near';const el=hits.slice(0,3).map(h=>'<code>'+(h.cls?h.tag+'.'+h.cls.trim().split(/\s+/)[0]:h.tag)+'</code>').join(' ');const nh=note?' — <em>"'+note.replace(/</g,'&lt;')+'"</em>':'';ft.innerHTML='<span class="dt">'+ic+' '+sh+'</span> '+act+' '+hits.length+' el: '+el+nh;ft.classList.add('has')}else if(note){ft.innerHTML='<span class="dt">✏ '+sh+'</span> <em>"'+note.replace(/</g,'&lt;')+'"</em>';ft.classList.add('has')}}
+function bnd(p){let x1=Infinity,y1=Infinity,x2=-Infinity,y2=-Infinity;for(const v of p){if(v.x<x1)x1=v.x;if(v.y<y1)y1=v.y;if(v.x>x2)x2=v.x;if(v.y>y2)y2=v.y}return{x:x1,y:y1,w:x2-x1,h:y2-y1}}
+function clf(p){if(p.length<5)return'freehand';const b=bnd(p),s=p[0],e=p[p.length-1],cl=Math.sqrt((e.x-s.x)**2+(e.y-s.y)**2),pe=(b.w+b.h)*2;let pl=0;for(let i=1;i<p.length;i++)pl+=Math.sqrt((p[i].x-p[i-1].x)**2+(p[i].y-p[i-1].y)**2);if(cl<pe*.25&&b.w>30&&b.h>30&&b.w/Math.max(1,b.h)>.35&&b.w/Math.max(1,b.h)<3)return'circle';if(b.w>50&&b.w/Math.max(1,b.h)>3&&cl/pl>.75)return'strikethrough';if(cl/pl>.65&&cl>40)return'arrow';return'freehand'}
+
+// ===== SMART ID =====
+const sB=document.getElementById('sBody'),sT=document.getElementById('sTip'),sF=document.getElementById('sFt');
+sB.addEventListener('mousemove',e=>{const el=e.target.closest('[data-sm]');if(el){const r=el.getBoundingClientRect(),br=sB.getBoundingClientRect();sT.textContent=el.dataset.sm;sT.style.left=(r.x-br.x)+'px';sT.style.top=(r.y-br.y-24)+'px';sT.classList.add('show');sF.innerHTML='<span class="dt">Smart ID:</span> <code>'+el.dataset.sm+'</code>';sF.classList.add('has')}else sT.classList.remove('show')});
+sB.addEventListener('mouseleave',()=>sT.classList.remove('show'));
+
+// ===== COMPUTED STYLES =====
+document.getElementById('csBody').addEventListener('click',e=>{const el=e.target.closest('[data-css]');const f=document.getElementById('csFt');if(el){f.innerHTML='<span class="dt">&lt;'+el.tagName.toLowerCase()+'&gt;</span> <code>'+el.dataset.css+'</code>';f.classList.add('has')}});
+
+// ===== SPACING =====
+const spB=document.getElementById('spBody'),spF=document.getElementById('spFt'),spT=document.getElementById('spTgt');let spO=null;
+spB.addEventListener('mouseenter',()=>{const r=spT.getBoundingClientRect(),br=spB.getBoundingClientRect();if(spO)spO.remove();spO=document.createElement('div');spO.style.cssText='position:absolute;pointer-events:none;z-index:12;inset:0';const ox=r.x-br.x,oy=r.y-br.y;spO.innerHTML='<div style="position:absolute;left:'+(ox-16)+'px;top:'+(oy-16)+'px;width:'+(r.width+32)+'px;height:'+(r.height+32)+'px;background:rgba(202,138,4,.06);border:1px dashed rgba(202,138,4,.25);border-radius:10px"></div><div style="position:absolute;left:'+(ox-16)+'px;top:'+(oy-5)+'px;font-family:var(--mono);font-size:9px;font-weight:500;color:#ca8a04">16px</div><div style="position:absolute;left:'+ox+'px;top:'+oy+'px;width:'+r.width+'px;height:'+r.height+'px;background:rgba(22,163,74,.06);border:1px dashed rgba(22,163,74,.25);border-radius:8px"></div><div style="position:absolute;left:'+(ox+3)+'px;top:'+(oy+2)+'px;font-family:var(--mono);font-size:9px;font-weight:500;color:#16a34a">16px 20px</div>';spB.appendChild(spO);spF.innerHTML='<span class="dt">Box model:</span> margin: <span style="color:#ca8a04">16px</span> · padding: <span style="color:#16a34a">16px 20px</span>';spF.classList.add('has')});
+spB.addEventListener('mouseleave',()=>{if(spO){spO.remove();spO=null}});
+
+// ===== CONTRAST =====
+let fgH='#171717',bgH='#ffffff';
+function h2r(h){return[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)]}
+function lm(r,g,b){const[a,c,d]=[r,g,b].map(v=>{v=v/255;return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4)});return .2126*a+.7152*c+.0722*d}
+function calcCR(f,b){const l1=lm(...h2r(f)),l2=lm(...h2r(b));return Math.round(((Math.max(l1,l2)+.05)/(Math.min(l1,l2)+.05))*100)/100}
+function updCC(v,t){if(t==='fg'){fgH=v;document.getElementById('ccFg').style.background=v}else{bgH=v;document.getElementById('ccBg').style.background=v}const r=calcCR(fgH,bgH);document.getElementById('ccR').textContent=r+':1';const aa=r>=4.5,aaa=r>=7;const ae=document.getElementById('ccAA'),aaae=document.getElementById('ccAAA');ae.textContent='AA '+(aa?'✓':'✗');ae.style.background=aa?'#dcfce7':'#fef2f2';ae.style.color=aa?'#166534':'#991b1b';aaae.textContent='AAA '+(aaa?'✓':'✗');aaae.style.background=aaa?'#dcfce7':'#fef2f2';aaae.style.color=aaa?'#166534':'#991b1b';document.getElementById('ccPv').style.color=fgH;document.getElementById('ccPv').style.background=bgH}
+</script>
+</body>
+</html>
