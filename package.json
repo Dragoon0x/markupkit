@@ -1,6 +1,6 @@
 {
   "name": "usemarkupkit",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Draw on your live website. Freehand feedback for AI agents. Circles detect elements, arrows map relationships, strikethroughs flag removals.",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
