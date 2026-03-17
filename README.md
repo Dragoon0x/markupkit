@@ -1,7 +1,5 @@
 # usemarkupkit
 
-> ⚠️ **Experimental** — This package is in active development. APIs may change between versions. DYOR.
-
 Draw on your live website. Freehand feedback for AI agents.
 
 **[Landing Page →](https://dragoon0x.github.io/markupkit)**
