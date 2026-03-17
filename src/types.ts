@@ -1,79 +1,74 @@
-/** A single point in a stroke */
 export interface Point { x: number; y: number; t: number }
 
-/** A raw stroke drawn by the user */
 export interface Stroke {
-  id: string
-  points: Point[]
-  color: string
-  width: number
-  timestamp: number
+  id: string; points: Point[]; color: string; width: number; timestamp: number
 }
 
-/** Detected shape type */
 export type ShapeType = 'circle' | 'arrow' | 'line' | 'strikethrough' | 'underline' | 'freehand' | 'rectangle' | 'cross'
 
-/** A recognized shape from a stroke */
 export interface Shape {
-  type: ShapeType
-  stroke: Stroke
-  /** Bounding box of the shape */
+  type: ShapeType; stroke: Stroke
   bounds: { x: number; y: number; width: number; height: number }
-  /** Confidence score 0-1 */
-  confidence: number
-  /** For arrows: start and end points */
-  head?: Point
-  tail?: Point
-  /** User's text note attached to this shape */
-  note: string
+  confidence: number; head?: Point; tail?: Point; note: string
 }
 
-/** A resolved element that a shape refers to */
+export interface SpacingData {
+  paddingTop: number; paddingRight: number; paddingBottom: number; paddingLeft: number
+  marginTop: number; marginRight: number; marginBottom: number; marginLeft: number
+}
+
+export interface ContrastData {
+  ratio: number; aa: boolean; aaa: boolean
+  foreground: string; background: string
+}
+
 export interface ResolvedElement {
-  selector: string
-  tag: string
-  classes: string
-  id: string
-  text: string
-  rect: { x: number; y: number; width: number; height: number }
-  component: string | null
+  selector: string; tag: string; classes: string; id: string
+  text: string; rect: { x: number; y: number; width: number; height: number }
+  component: string | null; source: string | null
+  spacing: SpacingData | null; contrast: ContrastData | null
+  computedStyles: Record<string, string> | null
 }
 
-/** A complete annotation: shape + resolved elements + note */
 export interface Annotation {
   id: string
   shape: Shape
-  /** Elements enclosed/targeted by the shape */
   elements: ResolvedElement[]
-  /** Spatial relationship description */
   intent: string
   note: string
   timestamp: number
+  mode: AnnotationMode
+  selectedText?: string
 }
 
-/** Full markup session output */
 export interface MarkupSession {
-  url: string
-  title: string
+  url: string; title: string
   viewport: { width: number; height: number }
-  annotations: Annotation[]
-  timestamp: number
+  annotations: Annotation[]; timestamp: number
 }
 
-/** Draw event passed to onDraw callback */
 export interface DrawEvent {
-  stroke: Stroke
-  shape: ShapeType
-  confidence: number
+  stroke: Stroke; shape: ShapeType; confidence: number
   bounds: { x: number; y: number; width: number; height: number }
 }
 
 export type OutputDetail = 'compact' | 'standard' | 'detailed' | 'forensic'
-
 export type ToolMode = 'draw' | 'arrow' | 'circle' | 'text' | 'eraser'
+export type AnnotationMode = 'draw' | 'text' | 'click' | 'multi' | 'area' | 'pause'
+
+export interface MarkupSettings {
+  detail: OutputDetail
+  color: string
+  showSpacing: boolean
+  showContrast: boolean
+  reactDetection: boolean
+  persistAnnotations: boolean
+  clearOnCopy: boolean
+  blockInteractions: boolean
+  sourceDetection: boolean
+}
 
 export interface MarkupProps {
-  // ---- Behavior ----
   enabled?: boolean
   color?: string
   strokeWidth?: number
@@ -87,7 +82,6 @@ export interface MarkupProps {
   className?: string
   copyToClipboard?: boolean
 
-  // ---- Callbacks ----
   onAnnotationAdd?: (annotation: Annotation) => void
   onAnnotationDelete?: (annotation: Annotation) => void
   onAnnotationUpdate?: (annotation: Annotation) => void
@@ -95,7 +89,6 @@ export interface MarkupProps {
   onCopy?: (markdown: string) => void
   onDraw?: (event: DrawEvent) => void
 
-  // ---- Agent Sync ----
   endpoint?: string
   sessionId?: string
   onSessionCreated?: (sessionId: string) => void
