@@ -178,7 +178,7 @@ footer{padding:32px 40px;border-top:1px solid var(--border);font-size:12px;color
     <a href="#events">Events</a>
     <div class="sep">Resources</div>
     <a href="https://github.com/dragoon0x/markupkit">GitHub</a>
-    <a href="https://www.npmjs.com/package/@dragoon0x/markupkit">npm</a>
+    <a href="https://www.npmjs.com/package/usemarkupkit">npm</a>
   </nav>
 </aside>
 
@@ -187,7 +187,7 @@ footer{padding:32px 40px;border-top:1px solid var(--border);font-size:12px;color
 
 <h1>Draw on bugs. Let AI fix them.</h1>
 
-<div class="install" onclick="navigator.clipboard.writeText('npm i @dragoon0x/markupkit').then(()=>{this.textContent='Copied!';setTimeout(()=>this.textContent='npm i @dragoon0x/markupkit',1500)})"><code style="background:none;padding:0">npm i @dragoon0x/markupkit</code></div>
+<div class="install" onclick="navigator.clipboard.writeText('npm i usemarkupkit').then(()=>{this.textContent='Copied!';setTimeout(()=>this.textContent='npm i usemarkupkit',1500)})"><code style="background:none;padding:0">npm i usemarkupkit</code></div>
 
 <p>MarkupKit turns freehand drawings into structured context that AI coding agents can understand and act on. Circle elements, draw arrows between them, strike through text, add a note, and copy the output into Claude Code, Cursor, or any AI tool.</p>
 
@@ -406,7 +406,7 @@ footer{padding:32px 40px;border-top:1px solid var(--border);font-size:12px;color
 
 <div class="cbl">
   <div class="cbl-h"><div class="d"><i></i><i></i><i></i></div><span>terminal</span></div>
-  <pre>npm install @dragoon0x/markupkit -D</pre>
+  <pre>npm install usemarkupkit -D</pre>
 </div>
 
 <p style="font-size:13px;color:var(--text3)">Or use yarn, pnpm, or bun.</p>
@@ -417,7 +417,7 @@ footer{padding:32px 40px;border-top:1px solid var(--border);font-size:12px;color
 
 <div class="cbl">
   <div class="cbl-h"><div class="d"><i></i><i></i><i></i></div><span>layout.tsx</span></div>
-  <pre><span class="ckw">import</span> { <span class="cfn">Markup</span> } <span class="ckw">from</span> <span class="cstr">'@dragoon0x/markupkit'</span>
+  <pre><span class="ckw">import</span> { <span class="cfn">Markup</span> } <span class="ckw">from</span> <span class="cstr">'usemarkupkit'</span>
 
 <span class="ckw">function</span> <span class="cfn">App</span>() {
   <span class="ckw">return</span> (
@@ -550,7 +550,7 @@ footer{padding:32px 40px;border-top:1px solid var(--border);font-size:12px;color
 
 <div class="cbl">
   <div class="cbl-h"><div class="d"><i></i><i></i><i></i></div><span>app.tsx</span></div>
-  <pre><span class="ckw">import</span> { <span class="cfn">Markup</span>, <span class="cfn">Annotation</span> } <span class="ckw">from</span> <span class="cstr">'@dragoon0x/markupkit'</span>
+  <pre><span class="ckw">import</span> { <span class="cfn">Markup</span>, <span class="cfn">Annotation</span> } <span class="ckw">from</span> <span class="cstr">'usemarkupkit'</span>
 
 <span class="ckw">function</span> <span class="cfn">App</span>() {
   <span class="ckw">const</span> <span class="cfn">handleAdd</span> = (<span class="cfn">a</span>: <span class="ctag">Annotation</span>) =&gt; {
@@ -706,7 +706,7 @@ curl -N -H "Last-Event-ID: 42" http://localhost:4747/sessions/:id/events</pre>
   <span class="cfn">formatSingleAnnotation</span>,
   <span class="cfn">smoothPoints</span>,
   <span class="cfn">strokeBounds</span>
-} <span class="ckw">from</span> <span class="cstr">'@dragoon0x/markupkit'</span>
+} <span class="ckw">from</span> <span class="cstr">'usemarkupkit'</span>
 
 <span style="color:#666">// Detect shape from raw stroke points</span>
 <span class="ckw">const</span> shape = <span class="cfn">detectShape</span>(stroke)
@@ -735,7 +735,7 @@ curl -N -H "Last-Event-ID: 42" http://localhost:4747/sessions/:id/events</pre>
 </div>
 
 <footer>
-  <a href="https://github.com/dragoon0x/markupkit">GitHub</a> · <a href="https://www.npmjs.com/package/@dragoon0x/markupkit">npm</a>
+  <a href="https://github.com/dragoon0x/markupkit">GitHub</a> · <a href="https://www.npmjs.com/package/usemarkupkit">npm</a>
 </footer>
 
 <script>
