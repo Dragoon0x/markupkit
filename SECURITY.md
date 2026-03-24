@@ -5,8 +5,7 @@
 If you discover a security vulnerability in MarkupKit, please report it responsibly:
 
 1. **Do not** open a public issue.
-2. Email: **security@dragoon0x.dev** (or open a private vulnerability report on GitHub).
-3. Include steps to reproduce, impact assessment, and any suggested fixes.
+2. Include steps to reproduce, impact assessment, and any suggested fixes.
 4. We will acknowledge receipt within 48 hours and aim to resolve critical issues within 7 days.
 
 ## Scope
