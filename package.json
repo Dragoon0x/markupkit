@@ -1,7 +1,7 @@
 {
   "name": "usemarkupkit",
-  "version": "1.0.0",
-  "description": "Draw on your live website. Freehand feedback for AI agents. Circles detect elements, arrows map relationships, strikethroughs flag removals.",
+  "version": "2.0.0",
+  "description": "Draw on your live website. Layout mode for AI agents. Rearrange, resize, wireframe, annotate.",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
@@ -24,6 +24,10 @@
     "prepublishOnly": "npm run build"
   },
   "keywords": [
+    "layout",
+    "wireframe",
+    "drag",
+    "resize",
     "react",
     "draw",
     "annotate",
